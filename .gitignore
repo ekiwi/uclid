@@ -29,3 +29,6 @@ tasks
 .z3_trace
 lib/libz3java.so
 /z3-*
+/z3/
+/sbt-*
+/sbt/
