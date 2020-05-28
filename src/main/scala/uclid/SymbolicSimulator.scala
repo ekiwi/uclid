@@ -154,6 +154,73 @@ class SymbolicSimulator (module : Module) {
       }
     }
   }
+
+  def getIdSymbolTable(scope : Scope) : SymbolTable = {
+    scope.map.values.collect {
+      case Scope.ConstantVar(id, typ) => id -> smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+      case Scope.Function(id, typ) => id -> smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+      case Scope.EnumIdentifier(id, typ) => id -> smt.EnumLit(id.name, smt.EnumType(typ.ids.map(_.toString)))
+      case Scope.InputVar(id, typ) => id -> smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+      case Scope.OutputVar(id, typ) => id -> smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+      case Scope.StateVar(id, typ) => id -> smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+      case Scope.SharedVar(id, typ) => id -> smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+    }.toMap
+  }
+
+  def buildTransitionSystem(name: String, scope: Scope): smt.SymbolicTransitionSystem = {
+    // extract init and next state using the simulate functions
+    val initSymbolTable = getIdSymbolTable(scope)
+    val frameTbl = ArrayBuffer(initSymbolTable)
+    val init = if (module.init.isDefined) {
+      simulateStmt(0, List.empty, module.init.get.body, initSymbolTable, frameTbl, context, "", addAssumptionToTree, addAssertToTree)
+    } else {
+      initSymbolTable
+    }
+    val step = simulateModuleNext(1, initSymbolTable, frameTbl, scope, "", addAssumptionToTree, addAssertToTree)
+
+    // derive state, input and output symbols from variables
+    val stateSyms = scope.map.values.collect {
+      case Scope.StateVar(id, typ) => smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+      case Scope.SharedVar(id, typ) => smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+    }
+    val inputs = scope.map.values.collect {
+      case Scope.InputVar(id, typ) => smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+    }
+    val outputSyms = scope.map.values.collect {
+      case Scope.OutputVar(id, typ) => smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
+    }
+
+    assert(outputSyms.isEmpty, "TODO: add support for outputs")
+
+    // combine symbols, init and step into states
+    val states = stateSyms.map { sym =>
+      val id = Identifier(sym.id)
+      smt.State(sym, init = init.get(id), next = step.get(id))
+    }
+
+    // axioms/assumptions are constraints
+    val constraints = module.axioms.map { ax =>
+      val expr = evaluate(ax.expr, initSymbolTable, frameTbl, 1, scope)
+      assert(ax.params.isEmpty, s"TODO: ${ax.params}")
+      expr
+    }
+
+    // find safety properties
+    val safety = scope.specs.toSeq.map { specVar =>
+      val prop = module.properties.find(p => p.id == specVar.varId).get
+      val isLTL = ExprDecorator.isLTLProperty(prop.params)
+      assert(!isLTL, s"TODO: handle non-safety properties: $prop")
+      val expr = evaluate(specVar.expr, initSymbolTable, frameTbl, 1, scope)
+      assert(specVar.params.isEmpty, s"TODO: ${specVar.params}")
+      expr
+    }
+    val bad = safety.map(s => smt.OperatorApplication(smt.NegationOp, List(s)))
+
+    val sys = smt.SymbolicTransitionSystem(Some(name), inputs=inputs.toSeq, states=states.toSeq, constraints=constraints, bad=bad)
+    println(sys)
+    sys
+  }
+
   def execute(solver : smt.Context, config : UclidMain.Config) : List[CheckResult] = {
     proofResults = List.empty
     def noLTLFilter(name : Identifier, decorators : List[ExprDecorator], properties: List[Identifier]) : Boolean = {
@@ -180,6 +247,7 @@ class SymbolicSimulator (module : Module) {
       params.filter(p => p.name == name).flatMap(ps => ps.values.map(p => p.asInstanceOf[Identifier]))
     }
     // add axioms as assumptions.
+    buildTransitionSystem(module.id.name, context)
     module.cmds.foreach {
       (cmd) => {
         cmd.name.toString match {
