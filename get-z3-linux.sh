@@ -19,5 +19,9 @@ unzip z3-$VERSION-x64-ubuntu-16.04.zip
 rm -rf z3/
 mv z3-$VERSION-x64-ubuntu-16.04/ z3/
 
+# copy z3 jar for sbt to find
+mkdir -p lib/
 cp z3/bin/com.microsoft.z3.jar lib/
+
+# add z3 to path
 source setup-z3-linux.sh

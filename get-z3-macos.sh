@@ -17,4 +17,5 @@ sudo cp z3/bin/libz3.dylib /usr/local/lib
 export PATH=$PATH:$(pwd)/z3/bin
 
 # copy z3 jar for sbt to find
+mkdir -p lib/
 cp z3/bin/com.microsoft.z3.jar lib/
