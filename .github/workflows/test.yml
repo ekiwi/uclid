@@ -87,12 +87,12 @@ jobs:
       run: |
        ls $GITHUB_WORKSPACE/z3/bin
        echo "::add-path::$GITHUB_WORKSPACE/z3/bin"
-       echo "::set-env name=LD_LIBRARY_PATH::/usr/local/lib"
+       echo "::set-env name=DYLD_LIBRARY_PATH::/usr/local/lib"
        echo "Checking to make sure the *.dylib files were copied."
        ls -l /Library/Java/Extensions/libz3java.dylib 
        ls -l /usr/local/lib/libz3.dylib
        echo "Checking Java Library Path"
-       java -XshowSettings:properties
+       java -XshowSettings:properties --version
 
     - name: Print Z3 Version
       run: z3 --version
