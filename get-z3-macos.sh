@@ -14,7 +14,7 @@ sudo cp z3/bin/libz3java.dylib  /Library/Java/Extensions
 sudo cp z3/bin/libz3.dylib /usr/local/lib
 
 # test
-cp z3/bin/libz3java.dylib .
+cp z3/bin/libz3.dylib .
 
 # add z3 to path
 export PATH=$PATH:$(pwd)/z3/bin
