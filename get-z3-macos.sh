@@ -14,6 +14,8 @@ sudo cp z3/bin/libz3java.dylib  /Library/Java/Extensions
 cp z3/bin/libz3.dylib ~/lib
 sudo cp z3/bin/libz3.dylib /usr/local/lib
 sudo cp z3/bin/libz3.dylib /usr/lib
+sudo cp z3/bin/libz3.dylib /Library/Java/Extensions
+sudo cp z3/bin/libz3.dylib /usr/lib/java
 
 # test
 #cp z3/bin/libz3.dylib .
