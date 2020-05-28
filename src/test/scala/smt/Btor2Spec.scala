@@ -6,7 +6,7 @@ class Btor2Spec extends FlatSpec with Matchers {
 
   // this function actually parses, serializes and parses again
   // in order to also test the serialization
-  def parse(src: Seq[String]): SymbolicTransitionSystem = {
+  def parse(src: Seq[String]): Btor2TransitionSystem = {
     val sys0 = Btor2.read(src.toIterator)
     val src1 = Btor2.serialize(sys0)
     val sys1 = Btor2.read(src1.toIterator)

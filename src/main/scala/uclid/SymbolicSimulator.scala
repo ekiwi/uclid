@@ -167,7 +167,7 @@ class SymbolicSimulator (module : Module) {
     }.toMap
   }
 
-  def buildTransitionSystem(name: String, scope: Scope): smt.SymbolicTransitionSystem = {
+  def buildTransitionSystem(name: String, scope: Scope): smt.Btor2TransitionSystem = {
     // extract init and next state using the simulate functions
     val initSymbolTable = getIdSymbolTable(scope)
     val frameTbl = ArrayBuffer(initSymbolTable)
@@ -216,7 +216,7 @@ class SymbolicSimulator (module : Module) {
     }
     val bad = safety.map(s => smt.OperatorApplication(smt.NegationOp, List(s)))
 
-    val sys = smt.SymbolicTransitionSystem(Some(name), inputs=inputs.toSeq, states=states.toSeq, constraints=constraints, bad=bad)
+    val sys = smt.Btor2TransitionSystem(Some(name), inputs=inputs.toSeq, states=states.toSeq, constraints=constraints, bad=bad)
     println(sys)
     sys
   }
