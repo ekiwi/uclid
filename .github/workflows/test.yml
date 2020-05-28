@@ -82,8 +82,7 @@ jobs:
       run: |
        ls $GITHUB_WORKSPACE/z3/bin
        echo "::add-path::$GITHUB_WORKSPACE/z3/bin"
-       echo "::set-env name=DYLD_LIBRARY_PATH::$DYLD_LIBRARY_PATH:/Library/Java/Extensions"
-       echo "::set-env name=LD_LIBRARY_PATH::$LD_LIBRARY_PATH:/Library/Java/Extensions"
+       echo "::set-env name=LD_LIBRARY_PATH::/usr/local/lib"
        echo "Checking to make sure the *.dylib files were copied."
        ls -l /Library/Java/Extensions/libz3java.dylib 
        ls -l /usr/local/lib/libz3.dylib
@@ -121,10 +120,7 @@ jobs:
         sbt compile
 
     - name: Test
-      run: |
-        echo "DYLD_LIBRARY_PATH: $DYLD_LIBRARY_PATH"
-        echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-        sbt "set fork:=true" test
+      run: sbt "set fork:=true" test
 
     - name: Package
       run: sbt universal:packageBin
