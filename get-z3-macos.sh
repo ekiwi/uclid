@@ -13,6 +13,9 @@ mv z3-$VERSION-x64-osx-10.14.6/ z3/
 sudo cp z3/bin/libz3java.dylib  /Library/Java/Extensions
 sudo cp z3/bin/libz3.dylib /usr/local/lib
 
+# test
+cp z3/bin/libz3java.dylib .
+
 # add z3 to path
 export PATH=$PATH:$(pwd)/z3/bin
 
