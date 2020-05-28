@@ -390,6 +390,7 @@ object BitVectorAndBoolSemantics {
   private def mask(w: Int): BigInt = (BigInt(1) << w) - 1
   private def isPositive(value: BigInt, w: Int) = (value & mask(w-1)) == value
   private def isNegative(value: BigInt, w: Int) = !isPositive(value, w)
+  private def twosComplement(value: BigInt, w: Int) = (((~value) & mask(w)) + 1) & mask(w)
   private def bool(b: Boolean): BigInt = if(b) BigInt(1) else BigInt(0)
   private def flipBits(value: BigInt, w: Int) = ~value & mask(w)
   def unary(op: Operator, a: BigInt): BigInt = op match {
@@ -400,13 +401,25 @@ object BitVectorAndBoolSemantics {
     case NegationOp => flipBits(a, 1)
     case other => throw new RuntimeException(s"Unsupported unary operation $other.")
   }
+  private def gtSigned(w: Int, a: BigInt, b: BigInt): Boolean = {
+    (isPositive(a, w), isPositive(b, w)) match {
+      case (true, false) => true
+      case (false, true) => false
+      case (true, true) => a > b
+      case (false, false) => twosComplement(a, w) < twosComplement(b, w)
+    }
+  }
   def binary(op: Operator, a: BigInt, b: BigInt): BigInt = op match {
     case EqualityOp | IffOp => bool(a == b)
     case InequalityOp => bool(a != b)
-    case BVLEUOp(_) => bool(a <= b)
-    case BVLTUOp(_) => bool(a < b)
-    case BVGEUOp(_) => bool(a >= b)
+    case BVLEUOp(_) => bool(b > a || a == b)
+    case BVLTUOp(_) => bool(b > a)
+    case BVGEUOp(_) => bool(a > b || a == b)
     case BVGTUOp(_) => bool(a > b)
+    case BVLEOp(w) => bool(gtSigned(w, b, a) || a == b)
+    case BVLTOp(w) => bool(gtSigned(w, b, a))
+    case BVGEOp(w) => bool(gtSigned(w, a, b) || a == b)
+    case BVGTOp(w) => bool(gtSigned(w, a, b))
     case BVAddOp(w) => (a + b) & mask(w)
     case BVMulOp(w) => (a * b) & mask(w)
     case BVSubOp(w) => (a + flipBits(b, w) + 1) & mask(w)
