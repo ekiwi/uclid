@@ -11,10 +11,10 @@ mv z3-$VERSION-x64-osx-10.14.6/ z3/
 
 # due to SIP we need to copy these libraries
 sudo cp z3/bin/libz3java.dylib  /Library/Java/Extensions
-sudo cp z3/bin/libz3.dylib /usr/local/lib
+cp z3/bin/libz3.dylib ~/lib
 
 # test
-cp z3/bin/libz3.dylib .
+#cp z3/bin/libz3.dylib .
 
 # add z3 to path
 export PATH=$PATH:$(pwd)/z3/bin
