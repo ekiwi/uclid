@@ -46,10 +46,11 @@ import vcd.VCD
 import scala.util.Try
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import com.typesafe.scalalogging.Logger
-import uclid.smt.{Z3HornSolver, Z3Interface}
+import uclid.smt.{Btor2TransitionSystem, ModelCheckSuccess, Z3HornSolver, Z3Interface}
 
 import scala.collection.mutable.{Map => MutableMap}
 import org.scalactic.source.Position
+
 import scala.util.parsing.input.NoPosition
 
 object UniqueIdGenerator {
@@ -247,7 +248,6 @@ class SymbolicSimulator (module : Module) {
       params.filter(p => p.name == name).flatMap(ps => ps.values.map(p => p.asInstanceOf[Identifier]))
     }
     // add axioms as assumptions.
-    buildTransitionSystem(module.id.name, context)
     module.cmds.foreach {
       (cmd) => {
         cmd.name.toString match {
@@ -256,6 +256,17 @@ class SymbolicSimulator (module : Module) {
             proofResults = List.empty
             dumpResults("clear_context", defaultLog)
           case "unroll" =>
+            val kMax = cmd.args.head._1.asInstanceOf[IntLit].value.toInt
+            val sys = buildTransitionSystem(module.id.name, context)
+            val checker = smt.Btor2.createBtorMC()
+            val res = checker.check(sys, kMax, Some("test.btor"))
+            res match {
+              case smt.ModelCheckSuccess() => println("Great!")
+              case smt.ModelCheckFail(witness) =>
+                val sim = new smt.TransitionSystemSimulator(sys)
+                sim.run(witness, Some("test.vcd"))
+            }
+
             val label : String = cmd.resultVar match {
               case Some(l) => l.toString
               case None    => "unroll"
