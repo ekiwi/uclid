@@ -181,6 +181,7 @@ class SymbolicSimulator (module : Module) {
 
     // derive state, input and output symbols from variables
     val stateSyms = scope.map.values.collect {
+      case Scope.ConstantVar(id, typ) => smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
       case Scope.StateVar(id, typ) => smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
       case Scope.SharedVar(id, typ) => smt.Symbol(id.name, smt.Converter.typeToSMT(typ))
     }
@@ -196,7 +197,9 @@ class SymbolicSimulator (module : Module) {
     // combine symbols, init and step into states
     val states = stateSyms.map { sym =>
       val id = Identifier(sym.id)
-      smt.State(sym, init = init.get(id), next = step.get(id))
+      // filter out constants that are initialized to themselves
+      val ii = init.get(id).filterNot(_ == sym)
+      smt.State(sym, init = ii, next = step.get(id))
     }
 
     // axioms/assumptions are constraints
